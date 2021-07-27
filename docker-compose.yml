@@ -1,0 +1,56 @@
+version: '3.9'
+
+services: 
+    # postgres instance
+    postgres: 
+        image: 'postgres:13.3'
+        environment:
+            POSTGRES_PASSWORD: password
+    
+    # redis instance
+    redis: 
+        image: 'redis'
+
+    # nginx instance
+    nginx:
+        restart: always
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./nginx
+        ports: 
+            - '8080:80'
+
+    # server instance
+    api: 
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./server
+        volumes: 
+            - /app/node_modules
+            - ./server:/app
+        environment: 
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - PG_USER=postgres
+            - PG_PASSWORD=password
+            - PG_DATABASE=postgres
+            - PG_HOST=postgres
+            - PG_PORT=5432
+
+    # worker instance
+    worker: 
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./worker
+        volumes: 
+            - /app/node_modules
+            - ./worker:/app
+
+    # client instance
+    client: 
+        build: 
+            dockerfile: Dockerfile.dev
+            context: ./client
+        volumes: 
+            - /app/node_modules
+            - ./client:/app
